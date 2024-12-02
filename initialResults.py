@@ -18,13 +18,14 @@ outfile_name = args.outfile_name
 
 topic_dict, q_id_map, q_batch = data.getTopics(topics_path)
 doc_dict, d_id_map, d_batch = data.getDocs(docs_path)
-q_batch = [f"Answer the following question: \"{' '.join(query.split(' ')[0:200])}\". Give the rationale before answering." for query in q_batch]
+q_batch = [f"Answer the following question: \"{query}\". Give the rationale before answering." for query in q_batch]
 batch_size = 10
 q_batches = [q_batch[i:i + batch_size] for i in range(0, len(q_batch), batch_size)]
 expanded_queries = []
 for idx, batch in enumerate(q_batches, 1):
-    finalized_queries = QueryExpansion.expand_query(batch, 300)
-    finalized_queries = [topic_dict[q_id_map[(i)]].strip() + " " + query for i, query in enumerate(finalized_queries)]
+    print(f"Starting batch {idx}")
+    finalized_queries = QueryExpansion.expand_query(batch, 512)
+    # finalized_queries = [topic_dict[q_id_map[(i)]].strip() + " " + query for i, query in enumerate(finalized_queries)]
     for query in finalized_queries:
         expanded_queries.append(finalized_queries)
     print(f"Expanded batch {idx} out of {len(q_batches)}")

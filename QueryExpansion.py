@@ -2,12 +2,13 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
 model_id = "meta-llama/Llama-3.1-8B-Instruct"
-token = ""
+token = "<>"
+device = 0 if torch.cuda.is_available() else -1
 tokenizer = AutoTokenizer.from_pretrained(model_id, token=token)
-model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.float16, token=token)
-query_expansion_pipeline = pipeline("text-generation", model=model, tokenizer=tokenizer, device_map="auto")
+model = AutoModelForCausalLM.from_pretrained(model_id, token=token, load_in_8bit=True)
+query_expansion_pipeline = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
-def expand_query(queries, max_length, num_return_sequences=1):
+def expand_query(queries, max_length):
     """
     Query expansion using Llama
 
@@ -23,20 +24,19 @@ def expand_query(queries, max_length, num_return_sequences=1):
     expansions = query_expansion_pipeline(
         queries,
         max_length=max_length,
-        num_return_sequences=num_return_sequences,
-        do_sample=True,
         top_k=50,
         top_p=0.95,
-        temperature=0.7,
+        temperature=0.6,
+        do_sample=True,
         truncation=True
     )
     
     return [expansion["generated_text"].strip() for expansion in expansions]
 
 # example
-query = "Why do airline tickets have titles in addition to names?"
-expanded_queries = expand_query(query, 100)
-print("Original Query:", query)
-print("Expanded Queries:")
-for idx, expanded_query in enumerate(expanded_queries, 1):
-    print(f"{idx}. {expanded_query}")
+# query = "Answer the following question: \"Why do airline tickets have titles in addition to names?\". Give the rationale before answering"
+# expanded_queries = expand_query(query, 300)
+# print("Original Query:", query)
+# print("Expanded Queries:")
+# for idx, expanded_query in enumerate(expanded_queries, 1):
+#     print(f"{idx}. {expanded_query}")

@@ -1,12 +1,14 @@
 import csv
 import json
+import re
 from rank_bm25 import BM25Okapi
 import numpy as np
 from bs4 import BeautifulSoup
 from sklearn.metrics.pairwise import cosine_similarity
 
-def parseText(text)->str:
-	return BeautifulSoup(text, "html.parser").text
+def parseText(text, word_limit=None)->str:
+	text = BeautifulSoup(text, "html.parser").text
+	return ' '.join(text.split()[0:word_limit]) # replace noise character and limit query lengths
 
 def getTopics(topics_path)->tuple[dict, dict, list]:
 	batch = []
@@ -15,7 +17,7 @@ def getTopics(topics_path)->tuple[dict, dict, list]:
 	with open(topics_path, 'r', encoding="utf-8") as f:
 		topics = json.load(f)
 	for idx, dict in enumerate(topics):
-		text = parseText(dict["Title"] + " " + dict["Body"])
+		text = parseText(dict["Title"] + " " + dict["Body"], 200)
 		#expanded_text = text + " " + QueryExpansion.expand_query(text, len(text)*3)[0]
 		topics_dict[dict["Id"]] = text
 		q_id_map[idx] = dict["Id"]
