@@ -1,7 +1,7 @@
 import data
 import torch
 import argparse
-import QueryExpansion
+from DocExpansion import docExpansion
 from sentence_transformers import SentenceTransformer
 
 parser = argparse.ArgumentParser(description="Initial ranks")
@@ -17,23 +17,35 @@ topics_path = args.topics_path
 outfile_name = args.outfile_name
 
 topic_dict, q_id_map, q_batch = data.getTopics(topics_path)
-doc_dict, d_id_map, d_batch = data.getDocs(docs_path)
-q_batch = [f"Answer the following question: \"{query}\". Give the rationale before answering." for query in q_batch]
-batch_size = 10
-q_batches = [q_batch[i:i + batch_size] for i in range(0, len(q_batch), batch_size)]
-expanded_queries = []
-for idx, batch in enumerate(q_batches, 1):
-    print(f"Starting batch {idx}")
-    finalized_queries = QueryExpansion.expand_query(batch, 512)
-    # finalized_queries = [topic_dict[q_id_map[(i)]].strip() + " " + query for i, query in enumerate(finalized_queries)]
-    for query in finalized_queries:
-        expanded_queries.append(finalized_queries)
-    print(f"Expanded batch {idx} out of {len(q_batches)}")
+doc_dict, d_id_map, d_batch, original_docs = data.getDocs(docs_path)
+
+batch_size = 100
+d_batches = [d_batch[i:i + batch_size] for i in range(0, len(d_batch), batch_size)]
+finalized_docs = []
+for idx, batch in enumerate(d_batches):
+    res = docExpansion(batch)
+    for doc in res:
+        finalized_docs.append(doc)
+    print(f"Finished batch {idx} out of {len(d_batches)}")
+data.saveNewDocs(finalized_docs, d_id_map, original_docs, "AnswersE.json")
+
+# un-used query expansion code
+# q_batch = [f"Generate a very detailed and informative answer to the following question: \"{query}\"" for query in q_batch]
+# batch_size = 10
+# q_batches = [q_batch[i:i + batch_size] for i in range(0, len(q_batch), batch_size)]
+# expanded_queries = []
+# for idx, batch in enumerate(q_batches):
+#     print(f"Starting batch {idx}")
+#     finalized_queries = QueryExpansion.expand_query(batch, 300)
+#     finalized_queries = [topic_dict[q_id_map[i+(idx*10)]].strip() + " " + query for i, query in enumerate(finalized_queries)]
+#     for query in finalized_queries:
+#         expanded_queries.append(query)
+#     print(f"Expanded batch {idx} out of {len(q_batches)}")
+# data.saveNewQueries(expanded_queries, "topics_1e.txt")
 
 # run initial model top get top 100s
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model = SentenceTransformer("sentence-transformers/multi-qa-MiniLM-L6-cos-v1", device=device)
-q_embs = data.getEmbeddings(expanded_queries, model)
-d_embs = data.getEmbeddings(d_batch, model)
-# scores = data.getBM25(expanded_queries, d_batch)
+q_embs = data.getEmbeddings(q_batch, model)
+d_embs = data.getEmbeddings(finalized_docs, model)
 data.writeTopN(q_embs, d_embs, q_id_map, d_id_map, "bi_encoder", outfile_name)
