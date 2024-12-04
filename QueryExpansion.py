@@ -2,7 +2,7 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
 model_id = "meta-llama/Llama-3.1-8B-Instruct"
-token = "<>"
+token = None
 device = 0 if torch.cuda.is_available() else -1
 tokenizer = AutoTokenizer.from_pretrained(model_id, token=token)
 model = AutoModelForCausalLM.from_pretrained(model_id, token=token, load_in_8bit=True)
