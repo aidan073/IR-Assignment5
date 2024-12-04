@@ -10,21 +10,6 @@ def parseText(text, word_limit=None)->str:
     text = BeautifulSoup(text, "html.parser").text
     return ' '.join(re.sub(r"\\'", "'", text).split()[0:word_limit]) # replace noise character and limit query lengths
 
-def getTopics(topics_path)->tuple[dict, dict, list]:
-    batch = []
-    topics_dict = {}
-    q_id_map = {}
-    with open(topics_path, 'r', encoding="utf-8") as f:
-        topics = json.load(f)
-    for idx, dict in enumerate(topics):
-        #title_text = parseText(dict["Title"], 200)
-        full_text = parseText(dict["Title"] + " " + dict["Body"], 300)
-        #expanded_text = text + " " + QueryExpansion.expand_query(text, len(text)*3)[0]
-        topics_dict[dict["Id"]] = full_text
-        q_id_map[idx] = dict["Id"]
-        batch.append(full_text)
-    return topics_dict, q_id_map, batch 
-
 def filter_qrel(queries:dict, input_qrel_path: str, output_qrel_path: str):
     filter_ids = []
     for idx, sample_id in queries.items():
@@ -40,6 +25,19 @@ def filter_qrel(queries:dict, input_qrel_path: str, output_qrel_path: str):
             qid = parts[0]
             if qid in filter_ids_set:
                 outfile.write(line)
+
+def getTopics(topics_path)->tuple[dict, dict, list]:
+    batch = []
+    topics_dict = {}
+    q_id_map = {}
+    with open(topics_path, 'r', encoding="utf-8") as f:
+        topics = json.load(f)
+    for idx, dict in enumerate(topics):
+        full_text = parseText(dict["Title"] + " " + dict["Body"], 300)
+        topics_dict[dict["Id"]] = full_text
+        q_id_map[idx] = dict["Id"]
+        batch.append(full_text)
+    return topics_dict, q_id_map, batch 
 
 def getDocs(docs_path)->tuple[dict, dict, list]:
     batch = []
@@ -65,7 +63,7 @@ def getBM25(queries, docs):
 
 # compute embeddings
 def getEmbeddings(batch, model):
-    embeddings = model.encode(batch, batch_size=32, show_progress_bar=True)
+    embeddings = model.encode(batch, batch_size=10, show_progress_bar=True)
     return embeddings
 
 # save expaned queries

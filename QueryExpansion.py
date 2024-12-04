@@ -23,12 +23,11 @@ def expand_query(queries, max_new_tokens):
     expansions = query_expansion_pipeline(
         queries,
         max_new_tokens=max_new_tokens,
-        top_k=50,
-        top_p=0.95,
+        top_k=20,
+        top_p=0.90,
         temperature=0.6,
         do_sample=True,
         truncation=True
     )
     
-    print(expansions)
     return [expansion[0]["generated_text"].strip() for expansion in expansions]
