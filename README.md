@@ -1,5 +1,5 @@
 # This repo was used for testing the performance of LLAMA3.1-Instruct-8B on query expansion.  
-The expanded queries were tested downstream on retrieval with gte-large-en-v1.5. 
+The expanded queries were tested downstream on retrieval with gte-large-en-v1.5. Additional DocExpansion code provided, but was not implemented in my testing due to hardware constraints.
   
 ## Installation:  
   

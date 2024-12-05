@@ -23,11 +23,12 @@ def expand_query(queries, max_new_tokens):
     expansions = query_expansion_pipeline(
         queries,
         max_new_tokens=max_new_tokens,
-        top_k=20,
+        top_k=10,
         top_p=0.90,
         temperature=0.6,
         do_sample=True,
-        truncation=True
+        truncation=True,
+        pad_token_id=tokenizer.eos_token_id
     )
     
     return [expansion[0]["generated_text"].strip() for expansion in expansions]
