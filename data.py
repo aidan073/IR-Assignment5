@@ -34,7 +34,7 @@ def getTopics(topics_path)->tuple[dict, dict, list]:
     with open(topics_path, 'r', encoding="utf-8") as f:
         topics = json.load(f)
     for idx, dict in enumerate(topics):
-        full_text = parseText(dict["Title"] + " " + dict["Body"], 500)
+        full_text = parseText(dict["Title"] + " " + dict["Body"])
         topics_dict[dict["Id"]] = full_text
         q_id_map[idx] = dict["Id"]
         batch.append(full_text)
@@ -81,8 +81,11 @@ def saveNewDocs(modified_docs, doc_id_map, original_docs, output_path):
         json.dump(original_docs, f, ensure_ascii=False)
         
 # given query/document embeddings, write top N most relevant documents for each query to an output file
-def writeTopN(q_embs, d_embs, q_map:dict, d_map:dict, run_name:str, output_path:str, top_n:int = 100):
-    similarities = cosine_similarity(q_embs, d_embs)
+def writeTopN(q_embs, d_embs, q_map:dict, d_map:dict, run_name:str, output_path:str, top_n:int = 100, normalized=False):
+    if not normalized:
+        similarities = cosine_similarity(q_embs, d_embs)
+    else:
+        similarities = q_embs @ d_embs.T
     with open(output_path, "w", newline = '') as f:
         writer = csv.writer(f, delimiter='\t')
         for i in range(len(q_embs)):

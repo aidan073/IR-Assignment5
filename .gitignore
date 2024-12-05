@@ -1,6 +1,7 @@
 __pycache__/
 .vscode/
 Answers.json
+topics_2.json
 topics_1.json
 topics_0.json
 topics_1e.json
@@ -8,3 +9,4 @@ evaluation.py
 qrel_0.tsv
 qrel_1.tsv
 top100t1.tsv
+res_final.tsv

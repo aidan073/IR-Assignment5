@@ -50,7 +50,14 @@ doc_dict, d_id_map, d_batch = data.getDocs(docs_path)
 
 # run initial model top get top 100s
 device = "cuda" if torch.cuda.is_available() else "cpu"
-model = SentenceTransformer('Alibaba-NLP/gte-large-en-v1.5', trust_remote_code=True, device=device)
-q_embs = data.getEmbeddings(q_batch, model)
-d_embs = data.getEmbeddings(d_batch, model)
-data.writeTopN(q_embs, d_embs, q_id_map, d_id_map, "bi_encoder", outfile_name)
+model = SentenceTransformer('nvidia/NV-Embed-v2', trust_remote_code=True, device=device)
+prefix = "Instruct: Given a question, retrieve passages that answer the question\nQuery: "
+model.max_seq_length = 32768
+model.tokenizer.padding_side="right"
+# add eos tokens
+q_batch = [query + model.tokenizer.eos_token for query in q_batch]
+d_batch = [doc + model.tokenizer.eos_token for doc in d_batch]
+# encode
+q_embs = model.encode(q_batch, batch_size=2, prompt=prefix, normalize_embeddings=True, show_progress_bar=True)
+d_embs = model.encode(d_batch, batch_size=2, normalize_embeddings=True, show_progress_bar=True)
+data.writeTopN(q_embs, d_embs, q_id_map, d_id_map, "bi_encoder", outfile_name, normalized=True)
